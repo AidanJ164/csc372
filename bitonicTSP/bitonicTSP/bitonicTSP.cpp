@@ -4,15 +4,17 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
 using namespace std;
 
 struct City{
     double x = 0;
     double y = 0;
-    bool visited = false;
 };
 
-vector<int> bruteForceTSP(vector<City> cities, int numCities, double& dist);
+double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<vector<int>>& path, int i, int j);
+//double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j);
+vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist);
 double dist(City city1, City city2);
 bool isValid(vector<int> set);
 vector<vector<int>> genSubsets(int numCities);
@@ -21,11 +23,13 @@ bool readFile( string fileName, vector<City>& cities, int& numCities );
 
 int main(int argc, char**argv)
 {
-    int i;
+    int i, j;
     int numCities;
     double bestDist;
     vector<City> cities;
     vector<int> bestPath;
+    vector<vector<double>> best(numCities);
+    vector<vector<int>> path(numCities);
     string fileName = argv[1];
     ofstream fout;
 
@@ -42,9 +46,90 @@ int main(int argc, char**argv)
     {
         cout << bestPath[i] << " ";
     }    
-    cout << "}" << endl << "Distance: " << bestDist;
+    cout << "}" << endl << "Distance: " << bestDist << endl;
+
+    // Initialize best array
+    for (i = 0; i < numCities; i++ )
+    {
+        best[i].resize(numCities);
+        path[i].resize(numCities);
+        for (j = 0; j < numCities; j++)
+        {
+            best[i][j] = -1;
+        }
+    }
+
+    //betterTSP(cities, numCities, bestDist);
+    //cout << betterTSP(cities, best, numCities - 1, numCities - 1) << endl;
+    cout << betterTSP(cities, best, path, numCities - 1, numCities - 1) << endl;
+
+
+    for(i = 0; i < numCities; i++)
+        cout << setw(11) << i;
+
+    cout << endl;
+    for (i = 0; i < numCities; i++ )
+    {
+        cout << i << " ";
+        for (j = 0; j < numCities; j++)
+        {
+            cout << setw(11) << best[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    for (i = 0; i < numCities; i++ )
+    {
+        for (j = 0; j < numCities; j++)
+        {
+            cout << setw(11) << path[i][j];
+        }
+        cout << endl;
+    }
+
+    cout << dist(cities[1],cities[2]) << endl;
+    cout << dist(cities[2],cities[3]) << endl;
 
     return 0;
+}
+
+double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<vector<int>>& path, int i, int j)
+{
+    if (best[i][j] != -1)
+    {
+        return best[i][j];
+    }
+
+    if ( i == 0 && j == 1)
+    {
+        best[0][1] = dist(cities[0],cities[1]);
+        path[0][1] = 1;
+        return best[0][1];
+    }
+
+    double temp;
+
+    if ( i < (j -1) )
+    {
+        best[i][j] = betterTSP(cities, best, path, i, j - 1) + dist(cities[j - 1], cities[j]); 
+        path[i][j] = j - 1;
+        return best[i][j];
+    }
+
+    best[i][j] = betterTSP(cities, best, path, i - 1, i) + dist(cities[i - 1],cities[j]);
+    path[i][j] = i - 1;
+    for ( int k = i - 2; k >= 0; k-- )
+    {
+        temp = betterTSP(cities, best, path, k, i) + dist(cities[k], cities[j]);
+        
+        //best[i][j] = (temp < best[i][j]) ? temp : best[i][j];
+        if (temp < best[i][j])
+        {
+            path[i][j] = k;
+            best[i][j] = temp;
+        }
+    }
+    return best[i][j];
 }
 
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist)
