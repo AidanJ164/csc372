@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <iomanip>
+#include <chrono>
 using namespace std;
 
 struct City{
@@ -12,8 +13,8 @@ struct City{
     double y = 0;
 };
 
-double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<vector<int>>& path, int i, int j);
-//double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j);
+double betterTSP( vector<City> cities, vector<vector<double>>& distances, int i, int j, int next, int numCities);
+double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>& path, int i, int j);
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist);
 double dist(City city1, City city2);
 bool isValid(vector<int> set);
@@ -28,8 +29,8 @@ int main(int argc, char**argv)
     double bestDist;
     vector<City> cities;
     vector<int> bestPath;
-    vector<vector<double>> best(numCities);
-    vector<vector<int>> path(numCities);
+    vector<vector<double>> best; 
+    vector<int> path;
     string fileName = argv[1];
     ofstream fout;
 
@@ -37,74 +38,119 @@ int main(int argc, char**argv)
         return -1;
     
     fileName.erase(fileName.end() - 3, fileName.end());
-    fout.open(fileName + ".out");
+    fout.open(fileName + ".csv", ios::out | ios::trunc);
+    if (!fout.is_open())
+    {
+        cout << " didnt open" << endl;
+        return -1;
+    }
 
-    bestPath = bruteForceTSP(cities, numCities, bestDist);
+    bestPath = bruteForceTSP(cities, 7, bestDist);
 
     cout << "Final Path: {"; 
-    for (i = 0; i < numCities; i++)
+    for (i = 0; i < 7; i++)
     {
         cout << bestPath[i] << " ";
     }    
     cout << "}" << endl << "Distance: " << bestDist << endl;
 
-    // Initialize best array
+    best.resize(numCities);
+    path.resize(numCities);
     for (i = 0; i < numCities; i++ )
     {
         best[i].resize(numCities);
-        path[i].resize(numCities);
         for (j = 0; j < numCities; j++)
         {
             best[i][j] = -1;
         }
     }
 
-    //betterTSP(cities, numCities, bestDist);
-    //cout << betterTSP(cities, best, numCities - 1, numCities - 1) << endl;
     cout << betterTSP(cities, best, path, numCities - 1, numCities - 1) << endl;
-
-
-    for(i = 0; i < numCities; i++)
-        cout << setw(11) << i;
-
-    cout << endl;
     for (i = 0; i < numCities; i++ )
     {
-        cout << i << " ";
-        for (j = 0; j < numCities; j++)
-        {
-            cout << setw(11) << best[i][j] << " ";
-        }
-        cout << endl;
+        cout << path[i] << " ";
     }
 
-    for (i = 0; i < numCities; i++ )
+
+    /*
+    for ( numCities = 3; numCities < 25; numCities++ )
     {
-        for (j = 0; j < numCities; j++)
+        best.resize(numCities);
+        auto start = chrono::high_resolution_clock::now();
+        // Initialize best array
+        for (i = 0; i < numCities; i++ )
         {
-            cout << setw(11) << path[i][j];
+            best[i].resize(numCities);
+            for (j = 0; j < numCities; j++)
+            {
+                best[i][j] = -1;
+            }
         }
-        cout << endl;
-    }
 
-    cout << dist(cities[1],cities[2]) << endl;
-    cout << dist(cities[2],cities[3]) << endl;
+        fout << numCities << "," << betterTSP(cities, best, 0, 0, 1, numCities) << ",";
+
+        auto stop = chrono::high_resolution_clock::now();
+        auto duration = chrono::duration_cast<chrono::microseconds>(stop - start);
+
+        fout << duration.count() << ",";
+
+        best.resize(numCities);
+        start = chrono::high_resolution_clock::now();
+
+        for (i = 0; i < numCities; i++)
+        {
+            best[i].resize(numCities);
+            for (j = 0; j < numCities; j++ )
+            {
+                best[i][j] = -1;
+            }
+        }
+
+        stop = chrono::high_resolution_clock::now();
+        duration = chrono::duration_cast<chrono::microseconds>(stop-start);
+        fout << duration.count() << endl;
+    }
+    */
+    fout.close();
 
     return 0;
 }
 
-double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<vector<int>>& path, int i, int j)
+double betterTSP( vector<City> cities, vector<vector<double>>& distances, int i, int j, int next, int numCities)
+{
+    if ( i == (numCities - 1 ) || j == (numCities - 1))
+    {
+        return dist(cities[i],cities[j]);
+    }
+
+    double path1, path2;
+
+    if (distances[i][next] == -1)
+    {
+        distances[i][next] = dist(cities[i], cities[next]);
+    }
+
+    if (distances[j][next] == -1)
+    {
+        distances[j][next] = dist(cities[j], cities[next]);
+    }
+        
+    path1 = betterTSP(cities, distances, next, j, next + 1, numCities) + distances[i][next];
+    path2 = betterTSP(cities, distances, i, next, next + 1, numCities) + distances[j][next];
+
+    if (path1 < path2)
+    {
+        return path1;
+    }
+
+    return path2;
+}
+
+double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>& path, int i, int j)
 {
     if (best[i][j] != -1)
     {
         return best[i][j];
-    }
-
-    if ( i == 0 && j == 1)
-    {
-        best[0][1] = dist(cities[0],cities[1]);
-        path[0][1] = 1;
-        return best[0][1];
     }
 
     double temp;
@@ -112,20 +158,19 @@ double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<vect
     if ( i < (j -1) )
     {
         best[i][j] = betterTSP(cities, best, path, i, j - 1) + dist(cities[j - 1], cities[j]); 
-        path[i][j] = j - 1;
+        path[j] = j-1;
         return best[i][j];
     }
 
     best[i][j] = betterTSP(cities, best, path, i - 1, i) + dist(cities[i - 1],cities[j]);
-    path[i][j] = i - 1;
+    path[j] = i - i;
     for ( int k = i - 2; k >= 0; k-- )
     {
         temp = betterTSP(cities, best, path, k, i) + dist(cities[k], cities[j]);
         
-        //best[i][j] = (temp < best[i][j]) ? temp : best[i][j];
         if (temp < best[i][j])
         {
-            path[i][j] = k;
+            path[j] = k;
             best[i][j] = temp;
         }
     }
@@ -235,6 +280,8 @@ bool readFile( string fileName, vector<City>& cities, int& numCities ) {
             fin >> cities[i].x;
             fin >> cities[i].y;
     }
+
+    fin.close();
 
     return true;
 }
