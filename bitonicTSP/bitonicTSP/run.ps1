@@ -1,2 +1,2 @@
 & g++.exe -o "bitonic" ".\bitonicTSP.cpp"
-& ".\bitonic.exe" "sample.in"
+& ".\bitonic.exe" "sample_7.in"

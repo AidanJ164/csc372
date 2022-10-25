@@ -20,108 +20,51 @@ struct Path{
 
 Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int j, int next, int numCities);
 double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j);
-double betterTSP( vector<City> cities, vector<vector<double>>& distances, vector<int>& path, int i, int j, int next, int numCities);
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist);
 double dist(City city1, City city2);
 bool isValid(vector<int> set);
 vector<vector<int>> genSubsets(int numCities);
 bool readFile( string fileName, vector<City>& cities, int& numCities );
+bool outputPath( string fileName, Path finalPath, int numCities );
+
 
 
 int main(int argc, char**argv)
 {
     int i, j;
     int numCities;
-    double bestDist;
     vector<City> cities;
-    vector<int> bestPath;
-    vector<vector<double>> best; 
-    vector<vector<Path>> best2;
+    vector<vector<Path>> distances; 
+    double bestDist = 0;
     vector<int> path;
     string fileName = argv[1];
-    ofstream fout;
-
     Path final;
 
     if ( !readFile( fileName, cities, numCities ) )
         return -1;
     
     fileName.erase(fileName.end() - 3, fileName.end());
-    fout.open(fileName + ".csv", ios::out | ios::trunc);
-    if (!fout.is_open())
+
+    path = bruteForceTSP(cities, numCities, bestDist);
+    for ( i = 0; i < numCities; i++) 
     {
-        cout << " didnt open" << endl;
-        return -1;
+        cout << path[i] << " ";
     }
+    cout << endl << bestDist;
 
-/*
-    bestPath = bruteForceTSP(cities, numCities, bestDist);
-
-    cout << "Final Path: {"; 
-    for (i = 0; i < numCities; i++)
-    {
-        cout << bestPath[i] << " ";
-    }    
-    cout << "}" << endl << "Distance: " << bestDist << endl;
-*/
-
-    best2.resize(numCities);
+    // Inititalize distance matrix
+    distances.resize(numCities);
     for (i = 0; i < numCities; i++ )
     {
-        best2[i].resize(numCities);
+        distances[i].resize(numCities);
         for (j = 0; j < numCities; j++)
         {
-            best2[i][j].distance = -1;
+            distances[i][j].distance = -1;
         }
     }
-    final = betterTSP(cities,best2, 0, 0, 1, numCities );
-    cout << endl << "Slower TSP: " << final.distance << endl;
-    for( i = 0; i < final.path.size(); i++)
-    {
-        cout << final.path[i] << " ";
-    }
 
-
-    for ( numCities = 3; numCities < 200; numCities++ )
-    {
-        best.resize(numCities);
-        auto start = chrono::high_resolution_clock::now();
-
-        for (i = 0; i < numCities; i++)
-        {
-            best[i].resize(numCities);
-            for (j = 0; j < numCities; j++ )
-            {
-                best[i][j] = -1;
-            }
-        }
-        best[0][1] = dist(cities[0], cities[1]);
-
-        fout << numCities << "," << betterTSP(cities, best, numCities - 1, numCities - 1) << ",";
-
-        auto stop = chrono::high_resolution_clock::now();
-        auto duration = chrono::duration_cast<chrono::microseconds>(stop-start);
-        fout << duration.count() << ",";
-
-        best2.resize(numCities);
-        start = chrono::high_resolution_clock::now();
-
-        for (i = 0; i < numCities; i++ )
-        {
-            best2[i].resize(numCities);
-            for (j = 0; j < numCities; j++)
-            {
-                best2[i][j].distance = -1;
-            }
-        }
-
-        betterTSP(cities, best2, 0, 0, 1, numCities);
-
-        stop = chrono::high_resolution_clock::now();
-        duration = chrono::duration_cast<chrono::microseconds>(stop - start);
-        fout << duration.count() << endl;
-    }
-    fout.close();
+    final = betterTSP(cities, distances, 0, 0, 1, numCities);
+    outputPath(fileName, final, numCities);
 
     return 0;
 }
@@ -156,34 +99,6 @@ Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int
     distances[i][j] = incj;
     distances[i][j].path.push_back(j);
     return distances[i][j];
-}
-
-// Slower tsp, probably O(2^n), faster with dynamic programming
-double betterTSP( vector<City> cities, vector<vector<double>>& distances, vector<int>& path, int i, int j, int next, int numCities)
-{
-    if ( i == (numCities - 1 ) || j == (numCities - 1))
-    {
-        return dist(cities[i],cities[j]);
-    }
-
-    double inci, incj;
-    vector<int> path1 = path;
-    vector<int> path2 = path;
-
-    inci = betterTSP(cities, distances, path1, next, j, next + 1, numCities) + dist(cities[i],cities[next]);
-    incj = betterTSP(cities, distances, path2, i, next, next + 1, numCities) + dist(cities[j],cities[next]);
-
-    if (inci < incj)
-    {
-        path = path1;
-        distances[i][j] = inci;
-        return inci;
-    }
-
-    path = path2;
-    path.push_back(j);
-    distances[i][j] = incj;
-    return incj;
 }
 
 // best alg, O(n^2), cant return path
@@ -321,5 +236,43 @@ bool readFile( string fileName, vector<City>& cities, int& numCities ) {
 
     fin.close();
 
+    return true;
+}
+
+bool outputPath( string fileName, Path finalPath, int numCities )
+{
+    int i;
+    ofstream fout;
+    vector<bool> used(numCities);
+
+    fout.open(fileName + ".out", ios::out | ios::trunc);
+    if (!fout.is_open())
+    {
+        cout << "Could not open " << fileName + ".out";
+        return false;
+    }
+
+
+    for (i = 0; i < numCities; i++ )
+    {
+        used[i] = false;
+    }
+
+    for (i = finalPath.path.size() - 1; i >= 0; i--)
+    {
+        fout << finalPath.path[i] << " ";
+        used[finalPath.path[i]] = true;
+    }
+
+    for (i = numCities - 1; i >= 0; i-- )
+    {
+        if (!used[i])
+        {
+            fout << i << " ";
+        }
+    }
+    fout << endl << finalPath.distance;
+
+    fout.close();
     return true;
 }
