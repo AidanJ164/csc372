@@ -18,10 +18,9 @@ struct Path{
     vector<int> path;
 };
 
-Path betterTSP( vector<City> cities, vector<vector<Path>>& best, int i, int j);
-//double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>& path, int i, int j);
+Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int j, int next, int numCities);
+double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j);
 double betterTSP( vector<City> cities, vector<vector<double>>& distances, vector<int>& path, int i, int j, int next, int numCities);
-//double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>& ipath, vector<int>& jpath, int i, int j);
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist);
 double dist(City city1, City city2);
 bool isValid(vector<int> set);
@@ -55,6 +54,7 @@ int main(int argc, char**argv)
         return -1;
     }
 
+/*
     bestPath = bruteForceTSP(cities, numCities, bestDist);
 
     cout << "Final Path: {"; 
@@ -63,35 +63,7 @@ int main(int argc, char**argv)
         cout << bestPath[i] << " ";
     }    
     cout << "}" << endl << "Distance: " << bestDist << endl;
-
-
-    best.resize(numCities);
-    path.clear();
-    for (i = 0; i < numCities; i++ )
-    {
-        best[i].resize(numCities);
-        for (j = 0; j < numCities; j++)
-        {
-            best[i][j] = -1;
-        }
-    }
-    cout << endl << "Slower TSP: " << betterTSP(cities, best, path, 0, 0, 1, numCities) << endl;
-
-    for( i = 0; i < path.size(); i++)
-    {
-        cout << path[i] << " ";
-    }
-
-    cout << endl;
-
-    for (i = 0; i < numCities; i++)
-    {
-        for ( j = 0; j < numCities; j++)
-        {
-            cout << setw(11) << best[i][j];
-        }
-        cout << endl;
-    }
+*/
 
     best2.resize(numCities);
     for (i = 0; i < numCities; i++ )
@@ -102,35 +74,16 @@ int main(int argc, char**argv)
             best2[i][j].distance = -1;
         }
     }
-    best2[0][1].distance = dist(cities[0],cities[1]);
-    //best2[0][1].path.push_back(1);
-    cout << final.distance << endl;
-
-    final =  betterTSP(cities, best2, numCities - 1, numCities - 1);
-    cout << final.distance << endl;
-
-    for (i = 0; i < numCities; i++)
-    {
-        for ( j = 0; j < numCities; j++)
-        {
-            cout << setw(11) << best2[i][j].distance;
-        }
-        cout << endl;
-    }
-
-    for (i = 0; i < final.path.size(); i++ )
+    final = betterTSP(cities,best2, 0, 0, 1, numCities );
+    cout << endl << "Slower TSP: " << final.distance << endl;
+    for( i = 0; i < final.path.size(); i++)
     {
         cout << final.path[i] << " ";
     }
-    cout << endl;
-    for (i = 0; i < best2[numCities - 1][numCities - 1].path.size(); i++)
-    {
-        cout << best2[numCities - 1][numCities - 1].path[i] << " ";
-    }
-    /*
+
+
     for ( numCities = 3; numCities < 200; numCities++ )
     {
-        cout << "here";
         best.resize(numCities);
         auto start = chrono::high_resolution_clock::now();
 
@@ -144,58 +97,65 @@ int main(int argc, char**argv)
         }
         best[0][1] = dist(cities[0], cities[1]);
 
-        fout << numCities << "," << betterTSP(cities, best, path, numCities - 1, numCities - 1) << ",";
+        fout << numCities << "," << betterTSP(cities, best, numCities - 1, numCities - 1) << ",";
 
         auto stop = chrono::high_resolution_clock::now();
         auto duration = chrono::duration_cast<chrono::microseconds>(stop-start);
+        fout << duration.count() << ",";
+
+        best2.resize(numCities);
+        start = chrono::high_resolution_clock::now();
+
+        for (i = 0; i < numCities; i++ )
+        {
+            best2[i].resize(numCities);
+            for (j = 0; j < numCities; j++)
+            {
+                best2[i][j].distance = -1;
+            }
+        }
+
+        betterTSP(cities, best2, 0, 0, 1, numCities);
+
+        stop = chrono::high_resolution_clock::now();
+        duration = chrono::duration_cast<chrono::microseconds>(stop - start);
         fout << duration.count() << endl;
-    }*/
+    }
     fout.close();
 
     return 0;
 }
 
-// Another attempt, saving the best path along with the best distance.
-Path betterTSP( vector<City> cities, vector<vector<Path>>& best, int i, int j)
+Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int j, int next, int numCities)
 {
-    Path path;
-    Path tempPath;
-    Path tempPath2;
+    Path final;
+    Path inci, incj;
 
-    if (best[i][j].distance != -1)
+    if ( distances[i][j].distance != -1 )
     {
-        return best[i][j];
+        return distances[i][j];
     }
 
-    double temp;
-
-    if ( i < (j - 1) )
+    if ( i == (numCities - 1 ) || j == (numCities - 1))
     {
-        best[i][j] = betterTSP(cities, best, i, j - 1);
-        best[i][j].distance += dist(cities[j - 1], cities[j]);
-        
-        //best[i][j].path.push_back(j - 1);
-
-        return best[i][j];
+        distances[i][j].distance = dist(cities[i],cities[j]);
+        return distances[i][j];
     }
 
-    best[i][j] = betterTSP(cities, best, i - 1, i);
-    best[i][j].distance += dist(cities[i - 1],cities[j]);
-    int tempIndex = i - 1;
-    for ( int k = i - 2; k >= 0; k-- )
-    {
-        tempPath = betterTSP(cities, best, k, i);
-        tempPath.distance += dist(cities[k], cities[j]);
+    inci = betterTSP(cities, distances, next, j, next + 1, numCities);
+    inci.distance += dist(cities[i],cities[next]); 
+    incj = betterTSP(cities, distances, i, next, next + 1, numCities);
+    incj.distance += dist(cities[j],cities[next]);
 
-        if (tempPath.distance < best[i][j].distance)
-        {
-            tempIndex = k;
-            best[i][j] = tempPath;
-        }
+    if (inci.distance < incj.distance)
+    {
+        distances[i][j]= inci;
+        return distances[i][j];
     }
 
-    best[i][j].path.push_back(tempIndex);
-    return best[i][j];
+    distances[i][j] = incj;
+    distances[i][j].path.push_back(j);
+    return distances[i][j];
 }
 
 // Slower tsp, probably O(2^n), faster with dynamic programming
@@ -216,22 +176,18 @@ double betterTSP( vector<City> cities, vector<vector<double>>& distances, vector
     if (inci < incj)
     {
         path = path1;
-        //path.push_back(i);
-        //path.insert(path.begin(), path1.begin() + path.size(), path1.end());
         distances[i][j] = inci;
         return inci;
     }
 
     path = path2;
     path.push_back(j);
-    //path.insert(path.begin(), path2.begin() + path.size(), path1.end());
     distances[i][j] = incj;
     return incj;
 }
 
-/*
 // best alg, O(n^2), cant return path
-double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>& path, int i, int j)
+double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j)
 {
      if (best[i][j] != -1)
     {
@@ -242,14 +198,14 @@ double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>
 
     if ( i < (j -1) )
     {
-        best[i][j] = betterTSP(cities, best, path, i, j - 1) + dist(cities[j - 1], cities[j]); 
+        best[i][j] = betterTSP(cities, best, i, j - 1) + dist(cities[j - 1], cities[j]); 
         return best[i][j];
     }
 
-    best[i][j] = betterTSP(cities, best, path, i - 1, i) + dist(cities[i - 1],cities[j]);
+    best[i][j] = betterTSP(cities, best, i - 1, i) + dist(cities[i - 1],cities[j]);
     for ( int k = i - 2; k >= 0; k-- )
     {
-        temp = betterTSP(cities, best, path, k, i) + dist(cities[k], cities[j]);
+        temp = betterTSP(cities, best, k, i) + dist(cities[k], cities[j]);
         
         if (temp < best[i][j])
         {
@@ -257,7 +213,7 @@ double betterTSP( vector<City> cities, vector<vector<double>>& best, vector<int>
         }
     }
     return best[i][j];
-}*/
+}
 
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist)
 {
