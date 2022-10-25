@@ -8,7 +8,7 @@ int main()
 
     fout.open("sample.in");
 
-    for (int i = 0; i < 50; i++ )
+    for (int i = 0; i < 200; i++ )
     {
         fout << i << " " << rand() % 50 << endl;
     }
