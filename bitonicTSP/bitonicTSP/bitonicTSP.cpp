@@ -1,11 +1,9 @@
+#include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <iomanip>
-#include <chrono>
 using namespace std;
 
 struct City{
@@ -19,15 +17,12 @@ struct Path{
 };
 
 Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int j, int next, int numCities);
-double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j);
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist);
 double dist(City city1, City city2);
 bool isValid(vector<int> set);
 vector<vector<int>> genSubsets(int numCities);
 bool readFile( string fileName, vector<City>& cities, int& numCities );
 bool outputPath( string fileName, Path finalPath, int numCities );
-
-
 
 int main(int argc, char**argv)
 {
@@ -49,7 +44,6 @@ int main(int argc, char**argv)
     // Read in list of cities
     if ( !readFile( fileName, cities, numCities ) )
     {
-        cout << "Could not read in " << fileName;
         return 0;
     }
     
@@ -80,38 +74,58 @@ int main(int argc, char**argv)
     return 0;
 }
 
+// My version for the TSP algorithm
 Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int j, int next, int numCities)
 {
-    Path final;
-    Path inci, incj;
+    Path final, inci, incj;
 
+    // If we have been here before, return
     if ( distances[i][j].distance != -1 )
     {
         return distances[i][j];
     }
 
+    // Base case, reached end of the cities
     if ( i == (numCities - 1 ) || j == (numCities - 1))
     {
         distances[i][j].distance = dist(cities[i],cities[j]);
         return distances[i][j];
     }
 
+    // Create path where i goes to next node
     inci = betterTSP(cities, distances, next, j, next + 1, numCities);
     inci.distance += dist(cities[i],cities[next]); 
+
+    // Create path where j goes to next node
     incj = betterTSP(cities, distances, i, next, next + 1, numCities);
     incj.distance += dist(cities[j],cities[next]);
 
+    // Compare the distances and return the shortest
     if (inci.distance < incj.distance)
     {
         distances[i][j]= inci;
         return distances[i][j];
     }
 
+    // If j is shorter, push j onto the path
     distances[i][j] = incj;
     distances[i][j].path.push_back(j);
     return distances[i][j];
 }
 
+// Return the distance between two cities
+double dist(City city1, City city2) {
+    double x = city1.x - city2.x;
+    double y = city1.y - city2.y;
+    x = pow(x,2);
+    y = pow(y,2);
+    return sqrt(x + y);
+}
+
+
+/*****************************************************************************
+* Brute Force Method Functions
+******************************************************************************/
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist)
 {
     int i, j;
@@ -148,13 +162,7 @@ vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist)
     return bestPath;
 }
 
-double dist(City city1, City city2) {
-    double x = city1.x - city2.x;
-    double y = city1.y - city2.y;
-    x = pow(x,2);
-    y = pow(y,2);
-    return sqrt(x + y);
-}
+
 
 bool isValid(vector<int> set)
 {
@@ -201,32 +209,43 @@ vector<vector<int>> genSubsets(int numCities)
     return allSubsets;
 }
 
-bool readFile( string fileName, vector<City>& cities, int& numCities ) {
-    ifstream fin;
+// Read the cities from the file into a vector
+bool readFile( string fileName, vector<City>& cities, int& numCities ) 
+{
     int i;
+    ifstream fin;
 
+    // Open file
     fin.open( fileName, ios::in );
     if ( !fin.is_open() )
+    {
+        cout << "Could not open " << fileName;
         return false;
-
-    fin >> numCities;
-    cities.resize(numCities);
-    for ( i = 0; i < numCities; i++ ){
-            fin >> cities[i].x;
-            fin >> cities[i].y;
     }
 
+    // Get total number of cities
+    fin >> numCities;
+    cities.resize(numCities);
+    for ( i = 0; i < numCities; i++ )
+    {
+        fin >> cities[i].x;
+        fin >> cities[i].y;
+    }
+
+    // Close file
     fin.close();
 
     return true;
 }
 
+// Output the path and distance to a file
 bool outputPath( string fileName, Path finalPath, int numCities )
 {
     int i;
     ofstream fout;
     vector<bool> used(numCities);
 
+    // Open output file
     fout.open(fileName + ".out", ios::out | ios::trunc);
     if (!fout.is_open())
     {
@@ -234,18 +253,20 @@ bool outputPath( string fileName, Path finalPath, int numCities )
         return false;
     }
 
-
+    // Initialize used array
     for (i = 0; i < numCities; i++ )
     {
         used[i] = false;
     }
 
+    // Print path going right
     for (i = finalPath.path.size() - 1; i >= 0; i--)
     {
         fout << finalPath.path[i] << " ";
         used[finalPath.path[i]] = true;
     }
 
+    // Print returning path
     for (i = numCities - 1; i >= 0; i-- )
     {
         if (!used[i])
@@ -253,8 +274,12 @@ bool outputPath( string fileName, Path finalPath, int numCities )
             fout << i << " ";
         }
     }
+    
+    // Print optimal distance
     fout << endl << finalPath.distance;
 
+    // Close the file
     fout.close();
+
     return true;
 }
