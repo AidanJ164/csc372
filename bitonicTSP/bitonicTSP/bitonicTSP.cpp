@@ -31,26 +31,30 @@ bool outputPath( string fileName, Path finalPath, int numCities );
 
 int main(int argc, char**argv)
 {
-    int i, j;
-    int numCities;
+    int i, j, numCities;
+    Path final;
+    string fileName;
     vector<City> cities;
     vector<vector<Path>> distances; 
-    double bestDist = 0;
-    vector<int> path;
-    string fileName = argv[1];
-    Path final;
 
-    if ( !readFile( fileName, cities, numCities ) )
-        return -1;
-    
-    fileName.erase(fileName.end() - 3, fileName.end());
-
-    path = bruteForceTSP(cities, numCities, bestDist);
-    for ( i = 0; i < numCities; i++) 
+    // Make sure there is correct number of arguments
+    if (argc != 2)
     {
-        cout << path[i] << " ";
+        cout << "Usage: .\\bitonicTSP.exe [filename]";
+        return 0;
     }
-    cout << endl << bestDist;
+
+    fileName =  argv[1];
+
+    // Read in list of cities
+    if ( !readFile( fileName, cities, numCities ) )
+    {
+        cout << "Could not read in " << fileName;
+        return 0;
+    }
+    
+    // Erase the .in in the file name
+    fileName.erase(fileName.end() - 3, fileName.end());
 
     // Inititalize distance matrix
     distances.resize(numCities);
@@ -63,8 +67,15 @@ int main(int argc, char**argv)
         }
     }
 
+    // Calc optimized path and distance
     final = betterTSP(cities, distances, 0, 0, 1, numCities);
-    outputPath(fileName, final, numCities);
+
+    // Output the path to file and make sure it works.
+    if (!outputPath(fileName, final, numCities))
+    {
+        cout << "Outputting to " << fileName + ".out" << " failed.";
+        return 0;
+    }
 
     return 0;
 }
@@ -99,35 +110,6 @@ Path betterTSP( vector<City> cities, vector<vector<Path>>& distances, int i, int
     distances[i][j] = incj;
     distances[i][j].path.push_back(j);
     return distances[i][j];
-}
-
-// best alg, O(n^2), cant return path
-double betterTSP( vector<City> cities, vector<vector<double>>& best, int i, int j)
-{
-     if (best[i][j] != -1)
-    {
-        return best[i][j];
-    }
-
-    double temp;
-
-    if ( i < (j -1) )
-    {
-        best[i][j] = betterTSP(cities, best, i, j - 1) + dist(cities[j - 1], cities[j]); 
-        return best[i][j];
-    }
-
-    best[i][j] = betterTSP(cities, best, i - 1, i) + dist(cities[i - 1],cities[j]);
-    for ( int k = i - 2; k >= 0; k-- )
-    {
-        temp = betterTSP(cities, best, k, i) + dist(cities[k], cities[j]);
-        
-        if (temp < best[i][j])
-        {
-            best[i][j] = temp;
-        }
-    }
-    return best[i][j];
 }
 
 vector<int> bruteForceTSP(vector<City> cities, int numCities, double& bestDist)
