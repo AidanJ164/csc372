@@ -51,7 +51,8 @@ int main(int argc, char** argv)
 
     lines = getLines(points);
 
-    cout << area(points, 4);
+    cout << area(points, 4) << endl;
+    findBisect(points, lines);
 
     return 0;
 }
@@ -93,17 +94,24 @@ double findBisect(vector<Point> points, vector<Line> lines)
         {
             if (x > lines[i].xmin && x < lines[i].xmax)
             {
-                allPoints.emplace( , getPoint(lines[i], x);
+                allPoints.emplace( allPoints.begin() + i + 1, getPoint(lines[i], x));
             }
         }
 
+        for ( i = 0; i < allPoints.size(); i++ )
+        {
+            cout << allPoints[i].x << " " << allPoints[i].y << endl;
+        }
+
+        x = 2;
         // Find points left and right of the line
 
 
         // Find areas of both sides
         // Move x in the direction of the bigger area
         // Repeat until both sides have equal area
-    } while( Aleft != Aright );
+    //} while( Aleft != Aright );
+    } while( x != 2);
 
     return x;
 }
