@@ -30,12 +30,14 @@ vector<Point> findRightPoints(vector<Point> points, double x);
 vector<Line> getLines(vector<Point> points);
 vector<Point> getIntersectionPoints(vector<Point> points, vector<Line> lines, double x);
 Point getPoint(Line line, double x);
-bool readFile(string fileName, vector<Point>& points);
+bool readFile(ifstream& fin, vector<Point>& points);
 
 int main(int argc, char** argv)
 {
     double x;
-    string filename;
+    ifstream fin;
+    int caseNum = 1;
+    string fileName;
     vector<Line> lines;
     vector<Point> points(4);
 
@@ -45,18 +47,28 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    filename = argv[1];
+    fileName = argv[1];
 
-    if (!readFile(filename, points))
+    fin.open(fileName);
+    if (!fin.is_open())
     {
+        cout << fileName << " could not be opened.";
         return 0;
     }
 
-    lines = getLines(points);
+    while (readFile(fin, points))
+    {
+        lines = getLines(points);
 
-    x = findBisect(points, lines);
+        x = findBisect(points, lines);
 
-    cout << x;
+        cout << "Case " << caseNum << ": ";
+        cout << fixed << setprecision(5) << x << endl;
+
+        caseNum++;
+    }
+
+    fin.close();
 
     return 0;
 }
@@ -83,7 +95,8 @@ double findBisect(vector<Point> points, vector<Line> lines)
     double Aleft, Aright, i, min, max, step, x;
     vector<Point> allPoints;
     vector<Point> leftPoints;
-    vector<Point> rightPoints;
+
+    double totalArea = area(points, 4);
     
     // Find min and max x
     min = findMinX(points);
@@ -100,15 +113,11 @@ double findBisect(vector<Point> points, vector<Line> lines)
 
         // Find points left and right of the line
         leftPoints = findLeftPoints(allPoints, x);
-        rightPoints = findRightPoints(allPoints, x);
 
         // Find areas of both sides
         Aleft = area(leftPoints, leftPoints.size());
-        Aright = area(rightPoints, rightPoints.size());
+        Aright = totalArea - Aleft;
 
-        cout << Aleft << " " << Aright << endl;
-        cout << setprecision(5) << fixed << " x = " << x << endl;
-        
         step /= 2;
 
         // Move x in the direction of the bigger area
@@ -122,7 +131,7 @@ double findBisect(vector<Point> points, vector<Line> lines)
         }
         // Repeat until both sides have equal area
 
-    } while( Aleft != Aright );
+    } while( (Aleft > Aright + 0.000001) || (Aleft < Aright - 0.000001) );
 
     return x;
 }
@@ -246,22 +255,19 @@ Point getPoint(Line line, double x)
     return point;
 }
 
-bool readFile(string fileName, vector<Point>& points)
+bool readFile(ifstream& fin, vector<Point>& points)
 {
-    ifstream fin;
     int i;
-
-    fin.open(fileName);
-    if (!fin.is_open())
-    {
-        cout << fileName << " could not be opened.";
-        return false;
-    }
 
     for (i = 0; i < 4; i++)
     {
         fin >> points[i].x;
         fin >> points[i].y;
+
+        if (points[i].x == -1)
+        {
+            return false;
+        }
     }
 
     return true;
