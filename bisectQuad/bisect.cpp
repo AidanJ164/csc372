@@ -1,5 +1,6 @@
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -27,11 +28,13 @@ double findMinX(vector<Point> points);
 double findMaxX(vector<Point> points);
 vector<Point> findRightPoints(vector<Point> points, double x);
 vector<Line> getLines(vector<Point> points);
+vector<Point> getIntersectionPoints(vector<Point> points, vector<Line> lines, double x);
 Point getPoint(Line line, double x);
 bool readFile(string fileName, vector<Point>& points);
 
 int main(int argc, char** argv)
 {
+    double x;
     string filename;
     vector<Line> lines;
     vector<Point> points(4);
@@ -51,8 +54,9 @@ int main(int argc, char** argv)
 
     lines = getLines(points);
 
-    cout << area(points, 4) << endl;
-    findBisect(points, lines);
+    x = findBisect(points, lines);
+
+    cout << x;
 
     return 0;
 }
@@ -76,8 +80,10 @@ double area(vector<Point> p, int n)
 
 double findBisect(vector<Point> points, vector<Line> lines)
 {
-    double Aleft, Aright, i, min, max, x;
+    double Aleft, Aright, i, min, max, step, x;
     vector<Point> allPoints;
+    vector<Point> leftPoints;
+    vector<Point> rightPoints;
     
     // Find min and max x
     min = findMinX(points);
@@ -85,33 +91,38 @@ double findBisect(vector<Point> points, vector<Line> lines)
 
     // Find middle x as vertical line
     x = (min + max) / 2;
+    step = x;
 
     do 
     {
         // Get points that intersect the quadrilateral
-        allPoints = points;
-        for ( i = lines.size() - 1; i >= 0; i-- )
-        {
-            if (x > lines[i].xmin && x < lines[i].xmax)
-            {
-                allPoints.emplace( allPoints.begin() + i + 1, getPoint(lines[i], x));
-            }
-        }
+        allPoints = getIntersectionPoints(points, lines, x);
 
-        for ( i = 0; i < allPoints.size(); i++ )
-        {
-            cout << allPoints[i].x << " " << allPoints[i].y << endl;
-        }
-
-        x = 2;
         // Find points left and right of the line
-
+        leftPoints = findLeftPoints(allPoints, x);
+        rightPoints = findRightPoints(allPoints, x);
 
         // Find areas of both sides
+        Aleft = area(leftPoints, leftPoints.size());
+        Aright = area(rightPoints, rightPoints.size());
+
+        cout << Aleft << " " << Aright << endl;
+        cout << setprecision(5) << fixed << " x = " << x << endl;
+        
+        step /= 2;
+
         // Move x in the direction of the bigger area
+        if (Aleft > Aright)
+        {
+            x -= step;
+        }
+        else if (Aleft < Aright)
+        {
+            x += step;
+        }
         // Repeat until both sides have equal area
-    //} while( Aleft != Aright );
-    } while( x != 2);
+
+    } while( Aleft != Aright );
 
     return x;
 }
@@ -123,7 +134,7 @@ vector<Point> findLeftPoints(vector<Point> points, double x)
 
     for ( i = 0; i < points.size(); i++ )
     {
-        if ( points[i].x < x )
+        if ( points[i].x <= x )
         {
             left.push_back(points[i]);
         }
@@ -164,10 +175,21 @@ double findMaxX(vector<Point> points)
     return x;
 }
 
-/*vector<Point> findRightPoints(vector<Point> points, double x)
+vector<Point> findRightPoints(vector<Point> points, double x)
 {
+    int i;
+    vector<Point> right;
 
-}*/
+    for ( i = 0; i < points.size(); i++ )
+    {
+        if ( points[i].x >= x )
+        {
+            right.push_back(points[i]);
+        }
+    }
+
+    return right;
+}
 
 vector<Line> getLines(vector<Point> points)
 {
@@ -196,6 +218,22 @@ vector<Line> getLines(vector<Point> points)
     lines[3].from = points[3];
 
     return lines;
+}
+
+vector<Point> getIntersectionPoints(vector<Point> points, vector<Line> lines, double x)
+{
+    int i;
+    vector<Point> allPoints = points;
+
+    for ( i = lines.size() - 1; i >= 0; i-- )
+    {
+        if (x > lines[i].xmin && x < lines[i].xmax)
+        {
+            allPoints.emplace( allPoints.begin() + i + 1, getPoint(lines[i], x));
+        }
+    }
+
+    return allPoints;
 }
 
 Point getPoint(Line line, double x)
