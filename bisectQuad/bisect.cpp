@@ -1,3 +1,13 @@
+/***********************************************************
+ * CSC 372 - Bisect a Quadrilateral
+ * Aidan Justice
+ * 
+ * Compile with:
+ *      g++ -o bisect bisect.cpp
+ * 
+ * Execute with:
+ *      .\bisect.exe [inputFile]
+***********************************************************/
 #include <cmath>
 #include <fstream>
 #include <iomanip>

@@ -1,3 +1,3 @@
 & g++ -o bisect bisect.cpp
-& ".\bisect.exe" "quad.in"
-& "code" "quad.out"
+& ".\bisect.exe" "quad1.in"
+& "code" "quad1.out"
