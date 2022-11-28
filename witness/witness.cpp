@@ -18,26 +18,17 @@ int main(int argv, char** argc)
     lli num;
     string fileName;
 
-    if (argv != 2)
-    {
-        cout << "Usage: witness.exe inputFile";
-        return 0;
-    }
-
-    fileName = argc[1];
-
-    fin.open(fileName);
+    fin.open("witness.in");
     if (!fin.is_open())
     {
-        cout << "Could not open " << fileName;
+        cout << "Could not open witness.in";
         return 0;
     }
 
-    fileName.erase(fileName.end() - 3, fileName.end());
-    fout.open(fileName + ".out");
+    fout.open("witness.out");
     if(!fout.is_open())
     {
-        cout << "Could not open " << fileName + ".out";
+        cout << "Could not open witness.out";
         return 0;
     }
 
