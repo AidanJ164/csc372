@@ -162,7 +162,8 @@ double findBisect(vector<Point> points, vector<Line> lines)
         }
         
     // Repeat until both sides have equal area
-    } while( (Aleft > Aright + 0.000001) || (Aleft < Aright - 0.000001) );
+    //} while( (Aleft > Aright + 0.000001) || (Aleft < Aright - 0.000001) );
+    } while( (step > (step * 2) + 0.0000001) || (step < (step * 2) - 0.0000001) );
 
     return x;
 }
