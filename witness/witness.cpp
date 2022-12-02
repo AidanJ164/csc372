@@ -8,7 +8,8 @@ typedef long long int lli;
 
 int findNonWitnesses(lli num);
 bool isPrime(lli n);
-bool isWitness(lli n, lli base);
+//bool isWitness(lli n, lli base);
+lli isWitness(lli base, lli e, lli n, bool& witness, lli start);
 lli modPow(lli base, lli e, lli n);
 
 int main(int argv, char** argc)
@@ -41,23 +42,31 @@ int main(int argv, char** argc)
         }
         else
         {
+            cout << num << ": ";
             fout << num << " " << findNonWitnesses(num) << endl;
+            cout << endl;
         }
         fin >> num;
     }
-    
+
     fin.close();
+    fout.close();
     return 0;
 }
 
 int findNonWitnesses(lli num)
 {
     int i, numWitnesses = 0;
+    bool witness;
 
     for (i = 2; i < num - 1; i++)
     {
-        if (!isWitness(num, i))
+        witness = false;
+        //if (!isWitness(num, i))
+        
+        if(isWitness(i, num -1, num, witness, num - 1) == 1 && !witness)
         {
+            cout << i << " ";
             numWitnesses++;
         }
     }
@@ -69,7 +78,12 @@ bool isPrime(lli n)
 {
     int i;
 
-    for (i = 2; i <= sqrt(n); i++)
+    if (n % 2 == 0)
+    {
+        return false;
+    }
+
+    for (i = 3; i <= sqrt(n); i += 2)
     {
         if (n % i == 0)
         {
@@ -98,7 +112,32 @@ lli modPow(lli base, lli e, lli n)
     return (temp * temp) % n;
 }
 
+lli isWitness(lli base, lli e, lli n, bool& witness, lli start)
+{
+    lli temp;
+    lli prev;
 
+    if (e == 0)
+    {
+        return 1;
+    }
+
+    if (e % 2 == 1)
+    {
+        return (base * isWitness(base, e - 1, n, witness, start)) % n;
+    }
+
+    prev = isWitness(base, e / 2, n, witness, start);
+    temp = (prev * prev) % n;
+    if (prev != 1 && prev != n - 1 && temp == 1 && e != start)
+    {
+        witness = true;
+    }
+
+    return temp;
+}
+
+/*
 bool isWitness(lli n, lli base)
 {
     int k = 1, j, m;
@@ -127,5 +166,4 @@ bool isWitness(lli n, lli base)
     }
 
     return true;
-}
-
+}*/
